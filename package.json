@@ -6,12 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate": "rm -f ./src/public/D20230125.json && bunx pdf-data-parser ./src/public/D20230125.pdf > ./src/public/D20230125.json"
   },
   "dependencies": {
+    "@nozbe/microfuzz": "^1.0.0",
+    "fuse.js": "^7.0.0",
+    "leaflet-geosearch": "^4.0.0",
+    "next": "14.2.15",
     "react": "^18",
-    "react-dom": "^18",
-    "next": "14.2.15"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "typescript": "^5",
