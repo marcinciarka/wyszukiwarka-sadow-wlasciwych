@@ -2,7 +2,7 @@
 
 import { Court } from "@/app/components/Court";
 import { LegalData } from "@/app/server-actions/getLegal";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { SearchResult } from "leaflet-geosearch/dist/providers/provider.js";
 import { RawResult } from "leaflet-geosearch/dist/providers/openStreetMapProvider.js";
