@@ -25,7 +25,7 @@ export const CourtSearch = ({
       addressdetails: 1,
     },
   });
-
+  const [includeCommercial, setIncludeCommercial] = useState(true);
   const [geoSearchResults, setGeoSearchResults] = useState<
     SearchResult<RawResult>[]
   >([]);
@@ -92,13 +92,54 @@ export const CourtSearch = ({
     return legalData.filter((court) => court.courtType === "Sąd Rejonowy");
   }, [legalData]);
 
+  const districtCommercialCourtList = useMemo(() => {
+    return districtCourtList.filter((court) => court.commerial);
+  }, [districtCourtList]);
+
   const regionalCourtList = useMemo(() => {
     return legalData.filter((court) => court.courtType === "Sąd Okręgowy");
   }, [legalData]);
 
+  const regionalCommercialCourtList = useMemo(() => {
+    return regionalCourtList.filter((court) => court.commerial);
+  }, [regionalCourtList]);
+
   const appealCourtList = useMemo(() => {
     return legalData.filter((court) => court.courtType === "Sąd Apelacyjny");
   }, [legalData]);
+
+  const appealCommercialCourtList = useMemo(() => {
+    return appealCourtList.filter((court) => court.commerial);
+  }, [appealCourtList]);
+
+  const commercialQueryText = useMemo(() => {
+    if (!searchParamsTyped) {
+      return "";
+    }
+    const broadQuery =
+      searchParamsTyped.address.city ??
+      searchParamsTyped.address.town ??
+      searchParamsTyped.address.suburb ??
+      searchParamsTyped.address.administrative ??
+      searchParamsTyped.address.city_district ??
+      searchParamsTyped.address.municipality?.replace("gmina", "").trim();
+
+    return broadQuery;
+  }, [searchParamsTyped]);
+
+  const districtCommercialCourtFiltered = useFuzzySearchList({
+    list: districtCommercialCourtList,
+    // If `queryText` is blank, `list` is returned in whole
+    queryText: commercialQueryText,
+    // optional `getText` or `key`, same as with `createFuzzySearch`
+    getText: (item) => [item.courtData],
+    // arbitrary mapping function, takes `FuzzyResult<T>` as input
+    mapResultItem: ({ item, score, matches: [highlightRanges] }) => ({
+      item,
+      highlightRanges,
+      score,
+    }),
+  });
 
   const districtCourtQueryText = useMemo(() => {
     if (!searchParamsTyped) {
@@ -159,6 +200,20 @@ export const CourtSearch = ({
     }),
   });
 
+  const regionalCommercialCourtFiltered = useFuzzySearchList({
+    list: regionalCommercialCourtList,
+    // If `queryText` is blank, `list` is returned in whole
+    queryText: commercialQueryText,
+    // optional `getText` or `key`, same as with `createFuzzySearch`
+    getText: (item) => [item.courtData],
+    // arbitrary mapping function, takes `FuzzyResult<T>` as input
+    mapResultItem: ({ item, score, matches: [highlightRanges] }) => ({
+      item,
+      highlightRanges,
+      score,
+    }),
+  });
+
   const appealCourtQueryText = useMemo(() => {
     if (!appealSearchParams) {
       return "";
@@ -183,7 +238,34 @@ export const CourtSearch = ({
     }),
   });
 
+  const appealCommercialCourtFiltered = useFuzzySearchList({
+    list: appealCommercialCourtList,
+    // If `queryText` is blank, `list` is returned in whole
+    queryText: commercialQueryText,
+    // optional `getText` or `key`, same as with `createFuzzySearch`
+    getText: (item) => [item.courtData],
+    // arbitrary mapping function, takes `FuzzyResult<T>` as input
+    mapResultItem: ({ item, score, matches: [highlightRanges] }) => ({
+      item,
+      highlightRanges,
+      score,
+    }),
+  });
+
   const finalResults = useMemo(() => {
+    if (includeCommercial) {
+      return {
+        districtCourtResults: districtCommercialCourtFiltered.filter(
+          (court) => court.score > 0.3 && court.score < 5
+        ),
+        regionalCourtResults: regionalCommercialCourtFiltered.filter(
+          (court) => court.score > 0.3 && court.score < 5
+        ),
+        appealCourtResults: appealCommercialCourtFiltered.filter(
+          (court) => court.score > 0.3 && court.score < 5
+        ),
+      };
+    }
     return {
       districtCourtResults: districtCourtFiltered.filter(
         (court) => court.score > 0.3 && court.score < 5
@@ -195,15 +277,32 @@ export const CourtSearch = ({
         (court) => court.score > 0.3 && court.score < 5
       ),
     };
-  }, [districtCourtFiltered, regionalCourtFiltered, appealCourtFiltered]);
+  }, [
+    districtCourtFiltered,
+    regionalCourtFiltered,
+    appealCourtFiltered,
+    includeCommercial,
+  ]);
 
   return (
     <>
       <div className="flex justify-center mt-10">
         <div className="text-center rounded-lg p-6 w-[1000px]">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-gray-800">
             Wyszukiwarka Sądów Właściwych
           </h1>
+          <h3 className="text-md font-bold text-gray-800 mb-4 mt-2">
+            <label htmlFor="includeCommercial">
+              <input
+                id="includeCommercial"
+                type="checkbox"
+                checked={includeCommercial}
+                onChange={() => setIncludeCommercial(!includeCommercial)}
+                className="mr-2"
+              />
+              z uwzględnieniem Wydziału Gospodarczego
+            </label>
+          </h3>
           <h1 className="text-xl text-gray-500 mb-6">
             {stats?.total} sądów w bazie (
             {courtTypes.map((key, index) =>
@@ -268,6 +367,13 @@ export const CourtSearch = ({
           )}
         </div>
       </div>
+      {/* <pre>
+        {JSON.stringify(
+          { districtCommercialCourtQueryText, districtCommercialCourtFiltered },
+          null,
+          2
+        )}
+      </pre> */}
       {!!searchParams && (
         <>
           <p className="text-center text-gray-500">
