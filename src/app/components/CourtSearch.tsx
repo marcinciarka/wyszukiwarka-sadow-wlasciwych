@@ -8,15 +8,6 @@ import { SearchResult } from "leaflet-geosearch/dist/providers/provider.js";
 import { RawResult } from "leaflet-geosearch/dist/providers/openStreetMapProvider.js";
 import { useFuzzySearchList } from "@nozbe/microfuzz/react";
 
-const geoSearchProvider = new OpenStreetMapProvider({
-  params: {
-    "accept-language": "pl",
-    countrycodes: "pl",
-    format: "geojson",
-    addressdetails: 1,
-  },
-});
-
 export const CourtSearch = ({
   legalData,
   stats,
@@ -26,6 +17,15 @@ export const CourtSearch = ({
   stats?: { total: number; courts: Record<string, number> };
   courtTypes: string[];
 }) => {
+  const geoSearchProvider = new OpenStreetMapProvider({
+    params: {
+      "accept-language": "pl",
+      countrycodes: "pl",
+      format: "geojson",
+      addressdetails: 1,
+    },
+  });
+
   const [geoSearchResults, setGeoSearchResults] = useState<
     SearchResult<RawResult>[]
   >([]);

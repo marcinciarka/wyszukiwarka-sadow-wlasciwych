@@ -1,4 +1,4 @@
-import { CourtSearch } from "@/app/components/CourtSearch";
+import { CourtSearchWrapper } from "@/app/components/CourtSearchWrapper";
 import { getLegal } from "@/app/server-actions/getLegal";
 
 export default async function Home() {
@@ -6,7 +6,7 @@ export default async function Home() {
   const courtTypes = Object.keys(stats?.courts || {});
   return (
     <div>
-      <CourtSearch
+      <CourtSearchWrapper
         legalData={legalData}
         stats={stats}
         courtTypes={courtTypes}
