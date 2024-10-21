@@ -10,7 +10,10 @@
     "generate": "rm -f ./src/public/D20230125.json && bunx pdf-data-parser ./src/public/D20230125.pdf > ./src/public/D20230125.json"
   },
   "dependencies": {
+    "@frsource/base64": "^1.0.92",
     "@nozbe/microfuzz": "^1.0.0",
+    "@tabler/icons-react": "^3.19.0",
+    "clsx": "^2.1.1",
     "fuse.js": "^7.0.0",
     "leaflet-geosearch": "^4.0.0",
     "next": "14.2.15",

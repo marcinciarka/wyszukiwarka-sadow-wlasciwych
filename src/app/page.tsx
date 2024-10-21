@@ -1,16 +1,12 @@
 import { CourtSearchWrapper } from "@/app/components/CourtSearchWrapper";
-import { getLegal } from "@/app/server-actions/getLegal";
+import { getCourts } from "@/app/server-actions/getCourts";
 
-export default async function Home() {
-  const { legalData, stats } = await getLegal();
-  const courtTypes = Object.keys(stats?.courts || {});
+export default async function SadyHome() {
+  const { courtsData, stats } = await getCourts();
   return (
-    <div>
-      <CourtSearchWrapper
-        legalData={legalData}
-        stats={stats}
-        courtTypes={courtTypes}
-      />
-    </div>
+    <CourtSearchWrapper
+      districtCourts={courtsData.districtCourts}
+      stats={stats}
+    />
   );
 }

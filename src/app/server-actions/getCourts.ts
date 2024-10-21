@@ -1,7 +1,9 @@
+import { safeEncodeUrl } from "@/app/handlers/urlEncodersDecoders";
 import fs from "fs";
 
-export type LegalData = {
+export type CourtsData = {
   fullCourtName: string;
+  fullCourtNameEncoded: string;
   courtType: "Sąd Apelacyjny" | "Sąd Rejonowy" | "Sąd Okręgowy";
   courtCity: string;
   courtData: string;
@@ -9,7 +11,7 @@ export type LegalData = {
   commerial: boolean;
 }[];
 
-export const getLegal = async () => {
+export const getCourts = async () => {
   try {
     const jsonData = JSON.parse(
       fs.readFileSync(
@@ -33,7 +35,7 @@ export const getLegal = async () => {
     //   "DZIENNIK USTAW": "d)"
     // (...)
 
-    const legalDataParsed = jsonData
+    const courtsDataParsed = jsonData
       .map((item) => {
         // Special case for this one court where its the other way around...
         if (item[2] === "Sąd") {
@@ -84,7 +86,7 @@ export const getLegal = async () => {
 
     // we need some structure to this data and since "–" (char code 8211) isn't a regular dash (char code 45) we can use this
 
-    const legalData = legalDataParsed.reduce((acc, item) => {
+    const courtsData = courtsDataParsed.reduce((acc, item) => {
       const [fullCourtName, courtData] = item.split(" – ");
       const courtCity = fullCourtName
         .replace("Sąd ", "")
@@ -96,6 +98,7 @@ export const getLegal = async () => {
         ...acc,
         {
           fullCourtName,
+          fullCourtNameEncoded: safeEncodeUrl(fullCourtName),
           courtType: fullCourtName.replace(courtCity, "").trim() as
             | "Sąd Apelacyjny"
             | "Sąd Rejonowy"
@@ -106,29 +109,55 @@ export const getLegal = async () => {
           commerial: courtData.includes("gospodarcz"),
         },
       ];
-    }, [] as LegalData);
+    }, [] as CourtsData);
+
+    const districtCourts = courtsData.filter(
+      (court) => court.courtType === "Sąd Rejonowy"
+    );
+    const regionalCourts = courtsData.filter(
+      (court) => court.courtType === "Sąd Okręgowy"
+    );
+    const appealCourts = courtsData.filter(
+      (court) => court.courtType === "Sąd Apelacyjny"
+    );
     return {
-      legalData,
+      courtsData: {
+        /**
+         * Sąd Rejonowy
+         */
+        districtCourts,
+        /**
+         * Sąd Okręgowy
+         */
+        regionalCourts,
+        /**
+         * Sąd Apelacyjny
+         */
+        appealCourts,
+      },
       error: false,
       stats: {
-        total: legalData.length,
-        courts: legalData.reduce((acc, item) => {
-          const type = item.courtType.replace("Sąd ", "").toLowerCase().trim();
-          if (acc[type]) {
-            acc[type] += 1;
-          } else {
-            acc[type] = 1;
-          }
-          return acc;
-        }, {} as Record<string, number>),
+        total: courtsData.length,
+        courts: {
+          districtCourts: districtCourts.length,
+          regionalCourts: regionalCourts.length,
+          appealCourts: appealCourts.length,
+        },
       },
       message: "",
     };
   } catch (message) {
     return {
-      legalData: [{}] as LegalData,
+      courtsData: {
+        districtCourts: [],
+        regionalCourts: [],
+        appealCourts: [],
+      },
+      stats: {},
       error: true,
       message,
     };
   }
 };
+
+export type GetCourtsResponse = Awaited<ReturnType<typeof getCourts>>;

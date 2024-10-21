@@ -1,120 +1,179 @@
-import { LegalData } from "@/app/server-actions/getLegal";
-import courtLevelOne from "@/public/img/court-1.svg";
-import courtLevelTwo from "@/public/img/court-2.svg";
-import courtLevelThree from "@/public/img/court-3.svg";
+import { GetCourtsResponse } from "@/app/server-actions/getCourts";
 import { HighlightRanges } from "@nozbe/microfuzz";
 import { Highlight } from "@nozbe/microfuzz/react";
-import Image from "next/image";
+import clsx from "clsx";
+import {
+  IconAlertCircle,
+  IconBooks,
+  IconHome,
+  IconStar,
+  IconTower,
+  IconWallet,
+} from "@tabler/icons-react";
 
 export const Court = ({
   court,
   highlightCourtName,
   highlightCourtData,
-  onClick,
+  uncertain,
   active,
+  superActive,
 }: {
-  court: LegalData[number];
+  court: GetCourtsResponse["courtsData"]["districtCourts"][number];
   highlightCourtName?: HighlightRanges | null;
   highlightCourtData?: HighlightRanges | null;
-  onClick?: () => void;
   active?: boolean;
+  superActive?: boolean;
+  uncertain?: boolean;
+  score?: number;
 }) => {
-  const departmentLabelClass = {
-    "Sąd Apelacyjny": "bg-white shadow-sm text-pink-800",
-    "Sąd Okręgowy": "bg-white shadow-sm text-teal-800",
-    "Sąd Rejonowy": "bg-white shadow-sm text-blue-800",
+  const commercialDepartmentLabelClass = {
+    "Sąd Apelacyjny": "text-white shadow-sm bg-pink-800",
+    "Sąd Okręgowy": "text-white shadow-sm bg-teal-800",
+    "Sąd Rejonowy": "text-white shadow-sm bg-blue-800",
   }[court.courtType];
+
+  const mortgageDepartmentLabelClass = {
+    "Sąd Apelacyjny": "text-white shadow-sm bg-pink-400",
+    "Sąd Okręgowy": "text-white shadow-sm bg-teal-400",
+    "Sąd Rejonowy": "text-white shadow-sm bg-blue-400",
+  }[court.courtType];
+
+  const gradientClass = {
+    "Sąd Apelacyjny": "from-pink-100",
+    "Sąd Okręgowy": "from-teal-100",
+    "Sąd Rejonowy": "from-blue-100",
+  }[court.courtType];
+
+  const activeClass = {
+    "Sąd Apelacyjny": "border-pink-800",
+    "Sąd Okręgowy": "border-teal-600",
+    "Sąd Rejonowy": "border-blue-500",
+  }[court.courtType];
+
+  const accentTextClass = {
+    "Sąd Apelacyjny": "text-pink-800",
+    "Sąd Okręgowy": "text-teal-600",
+    "Sąd Rejonowy": "text-blue-500",
+  }[court.courtType];
+
+  const highlightTextClass = {
+    "Sąd Apelacyjny": "bg-pink-100 text-pink-900",
+    "Sąd Okręgowy": "bg-teal-100 text-teal-900",
+    "Sąd Rejonowy": "bg-blue-100 text-blue-900",
+  }[court.courtType];
+
+  const icon = {
+    "Sąd Apelacyjny": (
+      <IconStar
+        size={160}
+        color="white"
+        className="absolute top-[-40px] left-[-40px] opacity-60"
+        title={court.courtType}
+      />
+    ),
+    "Sąd Okręgowy": (
+      <IconTower
+        size={120}
+        color="white"
+        className="absolute top-[-20px] left-[-20px] opacity-60"
+        title={court.courtType}
+      />
+    ),
+    "Sąd Rejonowy": (
+      <IconHome
+        size={160}
+        color="white"
+        className="absolute top-[-30px] left-[-30px] opacity-50"
+        title={court.courtType}
+      />
+    ),
+  }[court.courtType];
+
+  const comercialIcon = court.commerial ? (
+    <p
+      className={clsx(
+        "text-xs font-bold text-black inline-block mb-1 mr-2 px-2 py-1 rounded-lg relative z-2 leading-7",
+        commercialDepartmentLabelClass
+      )}
+    >
+      <IconWallet size={22} strokeWidth={1} className="inline mr-2 mb-1" />
+      Wydział Gospodarczy
+    </p>
+  ) : null;
+
+  const mortgageIcon = court.mortgageRegistry ? (
+    <p
+      className={clsx(
+        "text-xs font-bold text-black inline-block mb-1 mr-2 px-2 py-1 rounded-lg relative z-2 leading-7",
+        mortgageDepartmentLabelClass
+      )}
+    >
+      <IconBooks size={22} strokeWidth={1} className="inline mr-2 mb-1" />
+      Księgi Wieczyste
+    </p>
+  ) : null;
+
+  const uncertainIcon = uncertain ? (
+    <p
+      className={clsx(
+        "text-xs font-bold text-white inline-block mb-1 mr-2 px-2 py-1 rounded-lg relative z-2 leading-7 cursor-pointer",
+        "bg-red-700"
+      )}
+      title="Wyszukanie niepewne, sugerujemy sprawdzenie ręczne"
+    >
+      <IconAlertCircle size={18} strokeWidth={1} className="inline mr-2 mb-1" />
+      Niepewne wyszukanie
+    </p>
+  ) : null;
+
   return (
     <div
       key={court.fullCourtName}
-      className={`max-w-full bg-white hover:shadow-lg rounded-lg p-6 border bg-gradient-to-br to-60% ${
-        {
-          "Sąd Apelacyjny": "from-pink-100",
-          "Sąd Okręgowy": "from-teal-100",
-          "Sąd Rejonowy": "from-blue-100",
-        }[court.courtType]
-      } ${onClick ? "cursor-pointer" : ""} ${
-        active
-          ? {
-              "Sąd Apelacyjny": "border-pink-800",
-              "Sąd Okręgowy": "border-teal-600",
-              "Sąd Rejonowy": "border-blue-500",
-            }[court.courtType]
-          : "border-gray-200"
-      }`}
-      onClick={onClick}
+      className={clsx(
+        "max-w-full h-full relative bg-white shadow-sm hover:shadow-xl transition-shadow",
+        "hover:border-gray-300 transition-border",
+        "rounded-lg p-6 overflow-hidden",
+        "bg-gradient-to-br to-60%",
+        gradientClass,
+        active || superActive ? activeClass : "border-gray-100",
+        superActive ? `border-4 ${activeClass}` : "border"
+      )}
     >
+      {icon}
       <h2
-        className={`text-xl font-bold ${
-          {
-            "Sąd Apelacyjny": "text-pink-800",
-            "Sąd Okręgowy": "text-teal-600",
-            "Sąd Rejonowy": "text-blue-500",
-          }[court.courtType]
-        } mb-2`}
+        className={clsx("text-xl font-bold mb-2 relative z-2", accentTextClass)}
       >
-        {court.courtType === "Sąd Apelacyjny" && (
-          <Image
-            src={courtLevelOne}
-            alt={court.courtType}
-            className="w-8 h-8 inline rounded-lg"
-          />
-        )}
-        {court.courtType === "Sąd Okręgowy" && (
-          <Image
-            src={courtLevelTwo}
-            alt={court.courtType}
-            className="w-8 h-8 inline rounded-lg"
-          />
-        )}
-        {court.courtType === "Sąd Rejonowy" && (
-          <Image
-            src={courtLevelThree}
-            alt={court.courtType}
-            className="w-8 h-8 inline rounded-lg"
-          />
-        )}
         {highlightCourtName ? (
           <Highlight
-            className="font-bold"
+            className={clsx("font-bold p-0.5", highlightTextClass)}
+            style={{ backgroundColor: undefined }}
             text={court.fullCourtName}
             ranges={highlightCourtName}
           />
         ) : (
           court.fullCourtName
-        )}
+        )}{" "}
       </h2>
-      {court.commerial ? (
-        <>
-          <p
-            className={`text-xs font-bold text-black inline-block mb-1 p-2 ${departmentLabelClass} rounded-lg`}
-          >
-            Wydział Gospodarczy
+      {uncertainIcon}
+      {comercialIcon}
+      {mortgageIcon}
+      <div className="mt-3">
+        {highlightCourtData ? (
+          <p className="text-gray-700 text-xs relative z-2">
+            <Highlight
+              className={clsx("font-bold p-0.5", highlightTextClass)}
+              style={{ backgroundColor: undefined }}
+              text={court.courtData}
+              ranges={highlightCourtData}
+            />
           </p>
-          <br />
-        </>
-      ) : null}
-      {court.mortgageRegistry ? (
-        <>
-          <p
-            className={`text-xs font-bold text-black inline-block mb-1 p-2 ${departmentLabelClass} rounded-lg`}
-          >
-            Wydział Ksiąg Wieczystych
+        ) : (
+          <p className="text-gray-700 text-xs relative z-2">
+            {court.courtData}
           </p>
-          <br />
-        </>
-      ) : null}
-      {highlightCourtData ? (
-        <p className="text-sm">
-          <Highlight
-            className="font-bold"
-            text={court.courtData}
-            ranges={highlightCourtData}
-          />
-        </p>
-      ) : (
-        <p className="text-sm">{court.courtData}</p>
-      )}
+        )}
+      </div>
     </div>
   );
 };
