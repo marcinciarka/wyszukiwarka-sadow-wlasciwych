@@ -31,8 +31,10 @@ const parseCourtDataToPlaces = (courtData: string) => {
 
 export default async function ViewSad({
   params,
+  searchParams,
 }: {
   params: { sad_id: string };
+  searchParams: { regional?: string };
 }) {
   const { courtsData } = await getCourts();
   const parsedCourtId = safeDecodeUrl(params.sad_id);
@@ -78,8 +80,15 @@ export default async function ViewSad({
     getText: (item) => [item.courtData],
   });
 
+  const manualRegionalCourt = courtsData.regionalCourts.find(
+    ({ fullCourtNameEncoded }) =>
+      fullCourtNameEncoded === searchParams?.regional
+  );
+
   const attachedRegionalCourtSearch = regionalCourtFuzzySearch(
-    normalizeCity(selectedDistrictCourt?.courtCity)
+    normalizeCity(
+      manualRegionalCourt?.courtData || selectedDistrictCourt?.courtCity
+    )
   );
   const attachedRegionalCourt = attachedRegionalCourtSearch[0];
   const attachedAppealCourtSearch = appealCourtFuzzySearch(
@@ -204,23 +213,35 @@ export default async function ViewSad({
       <h4 className="text-3xl font-bold text-center text-gray-800 mt-10 mb-4">
         Sądy Okręgowe
       </h4>
+      <h5 className="text-md text-center text-gray-800 mt-4 mb-4">
+        Jeżeli nie został wybrany poprawny sąd okręgowy, możesz wybrać go
+        ręcznie
+      </h5>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
         {finalRegionalCourtsList.map((regionalCourt) => (
-          <Court
+          <Link
             key={regionalCourt.item.fullCourtNameEncoded}
-            court={regionalCourt.item}
-            highlightCourtData={
-              regionalCourt.item.fullCourtNameEncoded ===
-              attachedRegionalCourt.item.fullCourtNameEncoded
-                ? attachedRegionalCourt.matches[0]
-                : regionalCourt.matches[0]
-            }
-            uncertain={regionalCourt.score > 1}
-            superActive={
-              regionalCourt.item.fullCourtNameEncoded ===
-              attachedRegionalCourt.item.fullCourtNameEncoded
-            }
-          />
+            href={`/sad/${selectedDistrictCourt.fullCourtNameEncoded}?regional=${regionalCourt.item.fullCourtNameEncoded}`}
+          >
+            <Court
+              court={regionalCourt.item}
+              highlightCourtData={
+                !manualRegionalCourt ||
+                manualRegionalCourt.fullCourtNameEncoded !==
+                  regionalCourt.item.fullCourtNameEncoded
+                  ? regionalCourt.item.fullCourtNameEncoded ===
+                    attachedRegionalCourt.item.fullCourtNameEncoded
+                    ? attachedRegionalCourt.matches[0]
+                    : regionalCourt.matches[0]
+                  : null
+              }
+              uncertain={regionalCourt.score > 1}
+              superActive={
+                regionalCourt.item.fullCourtNameEncoded ===
+                attachedRegionalCourt.item.fullCourtNameEncoded
+              }
+            />
+          </Link>
         ))}
       </div>
       <h4 className="text-3xl font-bold text-center text-gray-800 mt-10 mb-4">

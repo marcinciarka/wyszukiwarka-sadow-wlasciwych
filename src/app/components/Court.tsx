@@ -18,6 +18,7 @@ export const Court = ({
   uncertain,
   active,
   superActive,
+  onClick,
 }: {
   court: GetCourtsResponse["courtsData"]["districtCourts"][number];
   highlightCourtName?: HighlightRanges | null;
@@ -26,6 +27,7 @@ export const Court = ({
   superActive?: boolean;
   uncertain?: boolean;
   score?: number;
+  onClick?: () => void;
 }) => {
   const commercialDepartmentLabelClass = {
     "Sąd Apelacyjny": "text-white shadow-sm bg-pink-800",
@@ -137,8 +139,10 @@ export const Court = ({
         "bg-gradient-to-br to-60%",
         gradientClass,
         active || superActive ? activeClass : "border-gray-100",
-        superActive ? `border-4 ${activeClass}` : "border"
+        superActive ? `border-4 ${activeClass}` : "border",
+        onClick ? "cursor-pointer" : ""
       )}
+      onClick={onClick}
     >
       {icon}
       <h2
