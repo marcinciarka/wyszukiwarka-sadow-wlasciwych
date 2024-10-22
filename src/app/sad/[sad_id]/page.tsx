@@ -10,13 +10,22 @@ const normalizeCity = (city?: string) => {
 };
 
 const parseCourtDataToPlaces = (courtData: string) => {
-  return courtData
-    .split(/,| i we | i | w | w: | we | oraz /)
-    .map((item) => item.replaceAll(":", ""))
-    .map((item) => item.trim())
-    .filter(
-      (item) => item.slice(0, 1) === item.slice(0, 1).toLocaleUpperCase()
-    );
+  return Array.from(
+    new Set(
+      courtData
+        .replace(
+          "obejmujący obszar właściwości sądów rejonowych:",
+          "obejmujący obszar właściwości sądów rejonowych w:"
+        )
+        .split(/,| i we | i | w | w: | we | oraz /)
+        .map((item) => item.replaceAll(":", ""))
+        .map((item) => item.trim())
+        .filter(
+          (item) => item.slice(0, 1) === item.slice(0, 1).toLocaleUpperCase()
+        )
+        .filter(Boolean)
+    )
+  );
 };
 
 export default async function ViewSad({
@@ -98,7 +107,15 @@ export default async function ViewSad({
       });
       return districtCourtSearches;
     })
-    .reduce((acc, item) => [...acc, ...item], []);
+    .reduce((acc, item) => [...acc, ...item], [])
+    .filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex(
+          (t) =>
+            t?.item.fullCourtNameEncoded === item?.item.fullCourtNameEncoded
+        )
+    );
 
   const attachedRegionalCourtCities = parseCourtDataToPlaces(
     attachedRegionalCourt.item.courtData
@@ -108,6 +125,19 @@ export default async function ViewSad({
     attachedRegionalCourtCities.map((city) => {
       return districtCourtFuzzySearch(city)[0];
     });
+
+  const regionalCourtsNamesAttachedToSelectedDistrictCourt =
+    regionalCourtsAttachedToSelectedDistrictCourtFuzzySearch.map(
+      (it) => it?.item.fullCourtNameEncoded
+    );
+
+  const isActiveDistrictCourt = (dcNameEncoded?: string) =>
+    regionalCourtsNamesAttachedToSelectedDistrictCourt.includes(
+      dcNameEncoded || ""
+    );
+
+  const isSuperActiveDistrictCourt = (dcNameEncoded?: string) =>
+    dcNameEncoded === selectedDistrictCourt.fullCourtNameEncoded;
 
   return (
     <>
@@ -122,72 +152,32 @@ export default async function ViewSad({
               <IconArrowBackUp className="ml-2 inline" />
             </button>
           </Link>
-          <h2 className="text-2xl text-gray-500 mb-3">
-            Struktura w oparciu o:{" "}
-            <span className="font-bold">{parsedCourtId}</span>
-          </h2>
         </div>
       </div>
-      <h4 className="text-3xl font-bold text-center text-gray-800 mt-10 mb-4">
+      <h4 className="text-3xl font-bold text-center text-gray-800 mt-4 mb-4">
         Sądy Rejonowe
       </h4>
-      <h4 className="text-xl text-center text-gray-800 mt-4 mb-4">
-        Ramką zaznaczone są sądy zależne od wybranego sądu rejonowego. Grubą
-        ramką zaznaczony jest wybrany sąd rejonowy.
+      <h4 className="text-md text-center text-gray-800 mt-4 mb-4">
+        Ramką zaznaczone są sądy zależne od okręgu wybranego sądu rejonowego (
+        {selectedDistrictCourt.courtCity}).
+        <br />
+        Grubą ramką zaznaczony jest wybrany sąd rejonowy. Pozostałe sądy są
+        sądami zależnymi
+        <br />
+        od sądów okręgowych, do którego należy sąd apelacyjny wybranego sądu
+        rejonowego.
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
         {finalDistrictCourtList
-          .filter(
-            (item) =>
-              item?.item.fullCourtNameEncoded ===
-              selectedDistrictCourt.fullCourtNameEncoded
-          )
-          .map((districtCourt) =>
-            districtCourt ? (
-              <Link
-                key={districtCourt.item.fullCourtNameEncoded}
-                href={`/sad/${districtCourt.item.fullCourtNameEncoded}`}
-              >
-                <Court
-                  court={districtCourt.item}
-                  highlightCourtName={districtCourt.matches[0]}
-                  uncertain={districtCourt.score > 1}
-                  active
-                  superActive
-                />
-              </Link>
-            ) : null
-          )}
-        {finalDistrictCourtList
-          .filter((item) =>
-            regionalCourtsAttachedToSelectedDistrictCourtFuzzySearch
-              .map((it) => it?.item.fullCourtNameEncoded)
-              .includes(item?.item.fullCourtNameEncoded)
-          )
-          .map((districtCourt) =>
-            districtCourt ? (
-              <Link
-                key={districtCourt.item.fullCourtNameEncoded}
-                href={`/sad/${districtCourt.item.fullCourtNameEncoded}`}
-              >
-                <Court
-                  court={districtCourt.item}
-                  highlightCourtName={districtCourt.matches[0]}
-                  uncertain={districtCourt.score > 1}
-                  active
-                />
-              </Link>
-            ) : null
-          )}
-        {finalDistrictCourtList
-          .filter((item) => {
-            return (
-              !regionalCourtsAttachedToSelectedDistrictCourtFuzzySearch
-                .map((it) => it?.item.fullCourtNameEncoded)
-                .includes(item?.item.fullCourtNameEncoded) &&
-              item?.item.fullCourtNameEncoded !==
-                selectedDistrictCourt.fullCourtNameEncoded
-            );
+          .sort((a, b) => {
+            // first show superactive, then active, and then rest
+            if (isSuperActiveDistrictCourt(a?.item.fullCourtNameEncoded))
+              return -1;
+            if (isSuperActiveDistrictCourt(b?.item.fullCourtNameEncoded))
+              return 1;
+            if (isActiveDistrictCourt(a?.item.fullCourtNameEncoded)) return -1;
+            if (isActiveDistrictCourt(b?.item.fullCourtNameEncoded)) return 1;
+            return 0;
           })
           .map((districtCourt) =>
             districtCourt ? (
@@ -199,13 +189,12 @@ export default async function ViewSad({
                   court={districtCourt.item}
                   highlightCourtName={districtCourt.matches[0]}
                   uncertain={districtCourt.score > 1}
-                  active={regionalCourtsAttachedToSelectedDistrictCourtFuzzySearch
-                    .map((item) => item?.item.fullCourtNameEncoded)
-                    .includes(districtCourt.item.fullCourtNameEncoded)}
-                  superActive={
-                    districtCourt.item.fullCourtNameEncoded ===
-                    selectedDistrictCourt.fullCourtNameEncoded
-                  }
+                  active={isActiveDistrictCourt(
+                    districtCourt?.item.fullCourtNameEncoded
+                  )}
+                  superActive={isSuperActiveDistrictCourt(
+                    districtCourt?.item.fullCourtNameEncoded
+                  )}
                 />
               </Link>
             ) : null
@@ -219,9 +208,14 @@ export default async function ViewSad({
           <Court
             key={regionalCourt.item.fullCourtNameEncoded}
             court={regionalCourt.item}
-            highlightCourtData={regionalCourt.matches[0]}
+            highlightCourtData={
+              regionalCourt.item.fullCourtNameEncoded ===
+              attachedRegionalCourt.item.fullCourtNameEncoded
+                ? attachedRegionalCourt.matches[0]
+                : regionalCourt.matches[0]
+            }
             uncertain={regionalCourt.score > 1}
-            active={
+            superActive={
               regionalCourt.item.fullCourtNameEncoded ===
               attachedRegionalCourt.item.fullCourtNameEncoded
             }
@@ -235,7 +229,7 @@ export default async function ViewSad({
         <Court
           court={attachedAppealCourt.item}
           highlightCourtData={attachedAppealCourt.matches[0]}
-          active
+          superActive
         />
       </div>
     </>
