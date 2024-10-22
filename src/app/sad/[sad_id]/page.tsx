@@ -17,6 +17,7 @@ const parseCourtDataToPlaces = (courtData: string) => {
           "obejmujący obszar właściwości sądów rejonowych:",
           "obejmujący obszar właściwości sądów rejonowych w:"
         )
+        .replaceAll("dla", "")
         .split(/,| i we | i | w | w: | we | oraz /)
         .map((item) => item.replaceAll(":", ""))
         .map((item) => item.trim())
