@@ -122,7 +122,6 @@ export default async function ViewSad({
       const regionalCourtDistrictCourts = parseCourtDataToPlaces(
         regionalCourt.item.courtData
       );
-      console.log("regionalCourtDistrictCourts", regionalCourtDistrictCourts);
       const districtCourtSearches = regionalCourtDistrictCourts.map((place) => {
         return districtCourtFuzzySearch(place)[0];
       });
