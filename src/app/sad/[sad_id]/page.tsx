@@ -171,23 +171,15 @@ export default async function ViewSad({
         Ramką zaznaczone są sądy zależne od okręgu wybranego sądu rejonowego (
         {selectedDistrictCourt.courtCity}).
         <br />
-        Grubą ramką zaznaczony jest wybrany sąd rejonowy. Pozostałe sądy są
-        sądami zależnymi
-        <br />
-        od sądów okręgowych, do którego należy sąd apelacyjny wybranego sądu
-        rejonowego.
+        Grubą ramką zaznaczony jest wybrany sąd rejonowy.
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
         {finalDistrictCourtList
-          .sort((a, b) => {
-            // first show superactive, then active, and then rest
-            if (isSuperActiveDistrictCourt(a?.item.fullCourtNameEncoded))
-              return -1;
-            if (isSuperActiveDistrictCourt(b?.item.fullCourtNameEncoded))
-              return 1;
-            if (isActiveDistrictCourt(a?.item.fullCourtNameEncoded)) return -1;
-            if (isActiveDistrictCourt(b?.item.fullCourtNameEncoded)) return 1;
-            return 0;
+          .filter((item) => {
+            return (
+              isSuperActiveDistrictCourt(item?.item.fullCourtNameEncoded) ||
+              isActiveDistrictCourt(item?.item.fullCourtNameEncoded)
+            );
           })
           .map((districtCourt) =>
             districtCourt ? (
@@ -236,7 +228,7 @@ export default async function ViewSad({
                   : null
               }
               uncertain={regionalCourt.score > 1}
-              superActive={
+              active={
                 regionalCourt.item.fullCourtNameEncoded ===
                 attachedRegionalCourt.item.fullCourtNameEncoded
               }
@@ -251,7 +243,7 @@ export default async function ViewSad({
         <Court
           court={attachedAppealCourt.item}
           highlightCourtData={attachedAppealCourt.matches[0]}
-          superActive
+          active
         />
       </div>
     </>

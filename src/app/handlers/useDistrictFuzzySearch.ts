@@ -25,26 +25,26 @@ export const useDistrictFuzzySearch = ({
     if (!searchParamsTyped) {
       return "";
     }
-    return ` ${(
+    return (
       searchParamsTyped.address.city ??
       searchParamsTyped.address.town ??
       searchParamsTyped.address.suburb ??
       searchParamsTyped.address.administrative ??
       searchParamsTyped.address.city_district ??
       searchParamsTyped.address.municipality?.replace("gmina", "").trim()
-    ).slice(0, -1)} `;
+    );
   }, [searchParamsTyped]);
 
   const districtCourtNarrowQueryText = useMemo(() => {
     if (!searchParamsTyped) {
       return "";
     }
-    return ` ${(
+    return (
       searchParamsTyped.address.municipality?.replace("gmina", "").trim() ??
       searchParamsTyped.address.city_district ??
       searchParamsTyped.address.administrative ??
       searchParamsTyped.address.suburb
-    ).slice(0, -1)} `;
+    );
   }, [searchParamsTyped]);
 
   const districtCourtBroadDataFiltered = useFuzzySearchList({
