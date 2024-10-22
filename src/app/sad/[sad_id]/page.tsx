@@ -17,10 +17,20 @@ const parseCourtDataToPlaces = (courtData: string) => {
           "obejmujący obszar właściwości sądów rejonowych:",
           "obejmujący obszar właściwości sądów rejonowych w:"
         )
-        .replaceAll("dla", "")
+        .replaceAll("dla ", "")
+        .replaceAll("w ", "")
         .split(/,| i we | i | w | w: | we | oraz /)
         .map((item) => item.replaceAll(":", ""))
         .map((item) => item.trim())
+        .map((item) =>
+          item
+            .split(" ")
+            .filter(
+              (item) =>
+                item.slice(0, 1) === item.slice(0, 1).toLocaleUpperCase()
+            )
+            .join(" ")
+        )
         .filter(
           (item) => item.slice(0, 1) === item.slice(0, 1).toLocaleUpperCase()
         )
@@ -112,6 +122,7 @@ export default async function ViewSad({
       const regionalCourtDistrictCourts = parseCourtDataToPlaces(
         regionalCourt.item.courtData
       );
+      console.log("regionalCourtDistrictCourts", regionalCourtDistrictCourts);
       const districtCourtSearches = regionalCourtDistrictCourts.map((place) => {
         return districtCourtFuzzySearch(place)[0];
       });
